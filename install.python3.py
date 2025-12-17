@@ -100,7 +100,8 @@ if __name__ == "__main__":
         rFile = io.open("/etc/mysql/my.cnf", "w", encoding="utf-8")
         rFile.write(rMySQLCnf)
         rFile.close()
-        os.system("sudo service mariadb restart  >/dev/null 2>&1")
+        # No Ubuntu 20.04 pode ser 'mysql' ou 'mariadb', tentamos restartar o servico que estiver rodando
+        os.system("sudo service mysql restart >/dev/null 2>&1")
     
     # MODIFICACAO: Força senha vazia para evitar erro interativo no Docker
     rExtra = ""
@@ -149,10 +150,13 @@ if __name__ == "__main__":
     if os.path.exists("/etc/init.d/xuione"): os.remove("/etc/init.d/xuione")
     if os.path.exists("/etc/systemd/system/xui.service"): os.remove("/etc/systemd/system/xui.service")
     if not os.path.exists("/etc/systemd/system/xuione.service"):
+        # Garante que o diretorio systemd exista (Docker)
+        os.makedirs("/etc/systemd/system", exist_ok=True)
         rFile = io.open("/etc/systemd/system/xuione.service", "w", encoding="utf-8")
         rFile.write(rSystemd)
         rFile.close()
         os.system("sudo chmod +x /etc/systemd/system/xuione.service  >/dev/null 2>&1")
+        # Systemctl commands might fail in docker, we ignore them
         os.system("sudo systemctl daemon-reload  >/dev/null 2>&1")
         os.system("sudo systemctl enable xuione  >/dev/null 2>&1")
         
@@ -164,10 +168,22 @@ if __name__ == "__main__":
     rFile = open("/home/xui/config/sysctl.on", "w")
     rFile.close()
     
-    # Limits
-    if not "DefaultLimitNOFILE=655350" in open("/etc/systemd/system.conf").read():
-        os.system("sudo echo \"\nDefaultLimitNOFILE=655350\" >> \"/etc/systemd/system.conf\"")
-        os.system("sudo echo \"\nDefaultLimitNOFILE=655350\" >> \"/etc/systemd/user.conf\"")
+    # Limits - FIXED FOR DOCKER
+    try:
+        if not os.path.exists("/etc/systemd/system.conf"):
+            os.system("touch /etc/systemd/system.conf")
+        
+        if not "DefaultLimitNOFILE=655350" in open("/etc/systemd/system.conf").read():
+            os.system("echo \"\nDefaultLimitNOFILE=655350\" >> \"/etc/systemd/system.conf\"")
+            
+        if not os.path.exists("/etc/systemd/user.conf"):
+             os.system("touch /etc/systemd/user.conf")
+             
+        if not "DefaultLimitNOFILE=655350" in open("/etc/systemd/user.conf").read():
+            os.system("echo \"\nDefaultLimitNOFILE=655350\" >> \"/etc/systemd/user.conf\"")
+    except:
+        # Se falhar no Docker, apenas ignora
+        pass
     
     # Redis
     os.makedirs("/home/xui/bin/redis", exist_ok=True)
@@ -225,12 +241,13 @@ if __name__ == "__main__":
     os.system("sudo chown xui:xui -R /home/xui  >/dev/null 2>&1")
     
     # Tempos reduzidos para deploy rapido
-    time.sleep(5) 
-    os.system("sudo systemctl daemon-reload  >/dev/null 2>&1")
-    time.sleep(5)
-    os.system("sudo systemctl start xuione  >/dev/null 2>&1")
+    time.sleep(2) 
+    # os.system("sudo systemctl daemon-reload  >/dev/null 2>&1") # Ignored in docker
+    time.sleep(2)
+    # os.system("sudo systemctl start xuione  >/dev/null 2>&1") # Manual start via wrapper
     
-    time.sleep(5)
+    time.sleep(2)
+    # Inicia os servicos
     os.system("sudo /home/xui/status 1  >/dev/null 2>&1")
     
     # Cria credentials.txt para referencia
