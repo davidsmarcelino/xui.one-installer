@@ -3,7 +3,7 @@ services:
   xui:
     build: .
     ports:
-      - "8080:80"
+      - "8090:80"
     volumes:
       - xui_data:/home/xui
       - mysql_data:/var/lib/mysql
