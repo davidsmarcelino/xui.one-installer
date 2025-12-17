@@ -2,12 +2,12 @@ FROM ubuntu:20.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# 1. Instala TODAS as dependencias (Incluindo libfreetype6 e correcoes anteriores)
+# 1. Instala TODAS as dependencias (Adicionado libmaxminddb0 e libssh2-1)
 RUN apt-get update && \
-    apt-get install -y sudo wget unzip dos2unix python3 python3-pip python3-dev mariadb-server libxml2 libssl1.1 libcurl4 net-tools libpng16-16 libzip-dev libjpeg-turbo8 libfreetype6 libxslt1.1 libmcrypt-dev && \
+    apt-get install -y sudo wget unzip dos2unix python3 python3-pip python3-dev mariadb-server libxml2 libssl1.1 libcurl4 net-tools libpng16-16 libzip-dev libjpeg-turbo8 libfreetype6 libxslt1.1 libmcrypt-dev libmaxminddb0 libssh2-1 && \
     apt-get clean
 
-# 2. Cria usuário e pastas (Executado apenas uma vez)
+# 2. Cria usuário e pastas
 RUN useradd -m -d /home/xui -s /bin/bash xui && \
     usermod -aG sudo xui && \
     mkdir -p /run/mysqld && \
