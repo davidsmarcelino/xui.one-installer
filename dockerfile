@@ -1,30 +1,22 @@
 FROM ubuntu:24.04
-WORKDIR /
 
-# Install necessary dependencies
+# Instala dependencias, incluindo a libxml2 que faltava
 RUN apt-get update && \
-    apt-get install -y sudo wget unzip dos2unix python-is-python3 python3-dev mariadb-server && \
+    apt-get install -y sudo wget unzip dos2unix python-is-python3 python3-dev mariadb-server libxml2 && \
     apt-get clean
 
-# Copy original xui.one & cracking file
+# Cria o usuário XUI forçadamente para ele sempre existir
+RUN useradd -m -d /home/xui -s /bin/bash xui && \
+    usermod -aG sudo xui
+
+# Copia os arquivos do repositório
 COPY original_xui/database.sql /database.sql
 COPY original_xui/xui.tar.gz /xui.tar.gz
 COPY install.python3.py /install.python3.py
+COPY wrapper.sh /wrapper.sh
 
-# Create a wrapper script that checks for installation
-RUN echo '#!/bin/bash\n\
-    if [ -f "/home/xui/status" ]; then\n\
-        echo "XUI already installed, starting service..."\n\
-        service mariadb start\n\
-        /home/xui/service start\n\
-    else\n\
-        echo "Starting fresh installation..."\n\
-        python3 /install.python3.py\n\
-    fi\n\
-    tail -f /dev/null' > /wrapper.sh && \
-    chmod +x /wrapper.sh
+# Dá permissão e ajusta o script de boot
+RUN chmod +x /wrapper.sh
 
-VOLUME ["/home/xui", "/var/lib/mysql"]
-EXPOSE 80
-
-ENTRYPOINT ["/wrapper.sh"]
+# Garante que o script rode
+CMD ["/wrapper.sh"]
