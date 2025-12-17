@@ -2,9 +2,9 @@ FROM ubuntu:20.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# 1. Instala dependencias (Adicionado libpng16-16 e libzip4)
+# 1. Instala dependencias (Adicionado libjpeg-turbo8)
 RUN apt-get update && \
-    apt-get install -y sudo wget unzip dos2unix python3 python3-pip python3-dev mariadb-server libxml2 libssl1.1 libcurl4 net-tools libpng16-16 libzip-dev && \
+    apt-get install -y sudo wget unzip dos2unix python3 python3-pip python3-dev mariadb-server libxml2 libssl1.1 libcurl4 net-tools libpng16-16 libzip-dev libjpeg-turbo8 && \
     apt-get clean
 
 # 2. Cria usuário e pastas
@@ -20,7 +20,7 @@ COPY install.python3.py /install.python3.py
 
 # 4. Script de inicialização
 RUN echo '#!/bin/bash\n\
-# Limpa locks antigos do mysql se existirem para evitar erros de start\n\
+# Limpa locks antigos do mysql se existirem\n\
 rm -f /var/run/mysqld/mysqld.sock\n\
 service mysql start\n\
 echo "Aguardando MySQL iniciar..."\n\
