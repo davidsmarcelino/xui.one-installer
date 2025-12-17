@@ -2,7 +2,7 @@ FROM ubuntu:20.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# 1. Instala TODAS as dependencias (Adicionado libmaxminddb0 e libssh2-1)
+# 1. Instala dependencias
 RUN apt-get update && \
     apt-get install -y sudo wget unzip dos2unix python3 python3-pip python3-dev mariadb-server libxml2 libssl1.1 libcurl4 net-tools libpng16-16 libzip-dev libjpeg-turbo8 libfreetype6 libxslt1.1 libmcrypt-dev libmaxminddb0 libssh2-1 && \
     apt-get clean
@@ -18,9 +18,18 @@ COPY original_xui/database.sql /database.sql
 COPY original_xui/xui.tar.gz /xui.tar.gz
 COPY install.python3.py /install.python3.py
 
-# 4. Script de inicialização
+# 4. Script de inicialização (Wrapper com Auto-Reparo do Banco)
 RUN echo '#!/bin/bash\n\
-# Limpa locks antigos\n\
+# Garante permissoes na pasta do banco\n\
+chown -R mysql:mysql /var/lib/mysql\n\
+\n\
+# Se o banco estiver vazio (instalacao limpa), inicializa ele\n\
+if [ ! -d "/var/lib/mysql/mysql" ]; then\n\
+    echo "Detectado volume vazio. Inicializando banco de dados..."\n\
+    mysql_install_db --user=mysql --datadir=/var/lib/mysql > /dev/null 2>&1\n\
+fi\n\
+\n\
+# Limpa locks e inicia\n\
 rm -f /var/run/mysqld/mysqld.sock\n\
 service mysql start\n\
 echo "Aguardando MySQL iniciar..."\n\
